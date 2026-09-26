@@ -53,7 +53,7 @@ weather-app/
 │   │   └── WeatherIntro.css
 │   │
 │   ├── App.jsx
-│   ├── App.css
+│   ├── Index.css
 │   └── main.jsx
 │
 ├── .env
@@ -70,13 +70,13 @@ weather-app/
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/snowXshade/React-frontend-Projects.git
 ```
 
 ### 2. Navigate to the project
 
 ```bash
-cd weather-app
+cd React-frontend-Projects
 ```
 
 ### 3. Install dependencies
@@ -114,7 +114,7 @@ units   → Temperature unit
 Example:
 
 ```text
-https://api.openweathermap.org/data/2.5/weather?q=Ranchi&appid=YOUR_API_KEY&units=metric
+https://api.openweathermap.org/data/2.5/weather?q=CITY_NAME&appid=YOUR_API_KEY&units=metric
 ```
 
 ---
@@ -150,7 +150,7 @@ It should **not** be inside `src/`.
 
 ## Running the Application
 
-Start the development server:
+Start the React App:
 
 ```bash
 npm run dev
@@ -226,7 +226,7 @@ For example:
 
 ```json
 {
-  "name": "Ranchi",
+  "name": "City_name",
   "sys": {
     "country": "IN"
   },
