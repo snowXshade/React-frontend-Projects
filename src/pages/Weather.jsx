@@ -1,9 +1,6 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
-
-import WeatherIntro from "../compo/WeatherIntro";
-const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
-
 import {
   Box,
   Button,
@@ -23,65 +20,142 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import AirIcon from "@mui/icons-material/Air";
 import DeviceThermostatIcon from "@mui/icons-material/DeviceThermostat";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
+import WeatherIntro from "../compo/WeatherIntro";
+
+const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+const BASE_URL = "https://api.openweathermap.org/data/2.5";
+const ICON_URL = "https://openweathermap.org/img/wn";
+
+// Reusable glass card styling
+const glassCard = {
+  bgcolor: "rgba(15, 23, 42, 0.82)",
+  color: "#F8FAFC",
+  border: "1px solid rgba(148, 163, 184, 0.22)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
+  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.18)",
+};
+
+const mutedText = "#CBD5E1";
+const accentColor = "#67E8F9";
 
 function Weather() {
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState(null);
+  const [forecast, setForecast] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showIntro, setShowIntro] = useState(true);
 
   const searchWeather = async () => {
-    if (!city.trim()) {
+    const cityName = city.trim();
+
+    if (!cityName) {
       setError("Please enter a city name.");
+      return;
+    }
+
+    if (!API_KEY) {
+      setError("API key is missing. Check your .env file.");
       return;
     }
 
     setLoading(true);
     setError("");
     setWeather(null);
+    setForecast([]);
 
     try {
-      // OpenWeather current weather API
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`;
+      const query = `q=${encodeURIComponent(
+        cityName
+      )}&appid=${API_KEY}&units=metric`;
 
-      console.log("Request URL:", url);
+      const [currentResponse, forecastResponse] = await Promise.all([
+        fetch(`${BASE_URL}/weather?${query}`),
+        fetch(`${BASE_URL}/forecast?${query}`),
+      ]);
 
-      const response = await fetch(url);
+      const currentData = await currentResponse.json();
+      const forecastData = await forecastResponse.json();
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("City not found.");
+      if (!currentResponse.ok) {
+        if (currentResponse.status === 404) {
+          throw new Error("City not found. Please check the spelling.");
         }
 
-        if (response.status === 401) {
-          throw new Error("Invalid API key.");
+        if (currentResponse.status === 401) {
+          throw new Error("Invalid API key. Check your OpenWeather API key.");
         }
 
-        throw new Error("Unable to fetch weather data.");
+        throw new Error(
+          currentData.message || "Unable to fetch current weather."
+        );
       }
 
-      const data = await response.json();
+      if (!forecastResponse.ok) {
+        if (forecastResponse.status === 401) {
+          throw new Error("Invalid API key. Check your OpenWeather API key.");
+        }
 
-      console.log("OpenWeather response:", data);
+        throw new Error(
+          forecastData.message || "Unable to fetch the weather forecast."
+        );
+      }
 
-      // Convert OpenWeather response
-      // into the structure used by our UI
-      const weatherData = {
-        city: data.name,
-        country: data.sys.country,
-        temperature: Math.round(data.main.temp),
-        condition: data.weather[0].description,
-        feelsLike: Math.round(data.main.feels_like),
-        humidity: data.main.humidity,
-        wind: data.wind.speed,
-      };
+      // Current weather
+      setWeather({
+        city: currentData.name,
+        country: currentData.sys.country,
+        temperature: Math.round(currentData.main.temp),
+        condition: currentData.weather[0].description,
+        icon: currentData.weather[0].icon,
+        feelsLike: Math.round(currentData.main.feels_like),
+        humidity: currentData.main.humidity,
+        wind: currentData.wind.speed,
+      });
 
-      setWeather(weatherData);
-    } catch (error) {
-      console.error(error);
-      setError(error.message);
+      // Select the forecast reading closest to noon for each date.
+      const dailyReadings = new Map();
+
+      forecastData.list.forEach((item) => {
+        const date = item.dt_txt.split(" ")[0];
+        const hour = Number(item.dt_txt.split(" ")[1].slice(0, 2));
+        const distanceFromNoon = Math.abs(hour - 12);
+
+        const existing = dailyReadings.get(date);
+
+        if (!existing || distanceFromNoon < existing.distanceFromNoon) {
+          dailyReadings.set(date, {
+            date,
+            distanceFromNoon,
+            temp: Math.round(item.main.temp),
+            condition: item.weather[0].main,
+            icon: item.weather[0].icon,
+          });
+        }
+      });
+
+      const dailyForecast = Array.from(dailyReadings.values())
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 5)
+        .map((day) => ({
+          ...day,
+          dayName: new Date(`${day.date}T12:00:00`).toLocaleDateString(
+            "en-US",
+            { weekday: "short" }
+          ),
+          formattedDate: new Date(`${day.date}T12:00:00`).toLocaleDateString(
+            "en-IN",
+            { day: "numeric", month: "short" }
+          ),
+        }));
+
+      setForecast(dailyForecast);
+    } catch (err) {
+      console.error("Weather request failed:", err);
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -95,331 +169,474 @@ function Weather() {
 
   return (
     <>
-      {/* Intro */}
       {showIntro && (
-        <WeatherIntro
-          onComplete={() => setShowIntro(false)}
-        />
+        <WeatherIntro onComplete={() => setShowIntro(false)} />
       )}
 
-      {/* Main Page */}
+      {/* Transparent wrapper: background is handled separately */}
       <Box
         sx={{
           minHeight: "100vh",
-          backgroundColor: "#f5f7fa",
-          py: 6,
+          position: "relative",
+          overflow: "hidden",
+          background: "transparent",
+          py: { xs: 4, md: 6 },
         }}
       >
-        <Container maxWidth="lg">
-
+        <Container maxWidth="md" sx={{ position: "relative", zIndex: 1 }}>
           {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: -30 }}
+            initial={{ opacity: 0, y: -25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Stack
-              spacing={1}
-              alignItems="center"
-              sx={{ mb: 4 }}
-            >
+            <Stack alignItems="center" spacing={1} sx={{ mb: 4 }}>
               <Typography
                 variant="h2"
-                fontWeight={700}
                 sx={{
-                  fontSize: {
-                    xs: "2.3rem",
-                    md: "3.5rem",
-                  },
+                  color: "#F8FAFC",
+                  fontWeight: 800,
+                  fontSize: { xs: "2.4rem", md: "3.5rem" },
+                  textAlign: "center",
+                  letterSpacing: "-1px",
+                  textShadow: "0 0 30px rgba(103, 232, 249, 0.18)",
                 }}
               >
                 Weather App
               </Typography>
 
               <Typography
-                variant="body1"
-                color="text.secondary"
+                sx={{
+                  color: mutedText,
+                  textAlign: "center",
+                  fontSize: { xs: "0.9rem", md: "1rem" },
+                }}
               >
-                Check today's weather
+                Check today's weather and 5-day forecast
               </Typography>
             </Stack>
           </motion.div>
 
           {/* Search */}
-          <motion.div
-            initial={{
-              opacity: 0,
-              scale: 0.95,
-            }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-            }}
-            transition={{
-              duration: 0.5,
-              delay: 0.15,
+          <Paper
+            elevation={0}
+            sx={{
+              ...glassCard,
+              maxWidth: 650,
+              mx: "auto",
+              p: { xs: 1.5, sm: 2 },
+              mb: 4,
+              borderRadius: 4,
             }}
           >
-            <Paper
-              elevation={2}
-              sx={{
-                maxWidth: 650,
-                margin: "0 auto",
-                padding: 2,
-                marginBottom: 4,
-                borderRadius: 3,
-              }}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.5}
             >
-              <Stack
-                direction={{
-                  xs: "column",
-                  sm: "row",
-                }}
-                spacing={1.5}
-              >
-                <TextField
-                  fullWidth
-                  label="City"
-                  placeholder="Enter city name"
-                  value={city}
-                  onChange={(event) => {
-                    setCity(event.target.value);
-                  }}
-                  onKeyDown={handleKeyDown}
-                />
-
-                <Button
-                  variant="contained"
-                  size="large"
-                  startIcon={<SearchIcon />}
-                  onClick={searchWeather}
-                  sx={{
-                    minWidth: {
-                      xs: "100%",
-                      sm: 130,
+              <TextField
+                fullWidth
+                label="City"
+                placeholder="e.g. Ranchi"
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+                onKeyDown={handleKeyDown}
+                sx={{
+                  "& .MuiInputLabel-root": {
+                    color: mutedText,
+                  },
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: accentColor,
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    color: "#F8FAFC",
+                    borderRadius: 2.5,
+                    backgroundColor: "rgba(255,255,255,0.03)",
+                    "& fieldset": {
+                      borderColor: "rgba(148,163,184,0.35)",
                     },
-                  }}
-                >
-                  Search
-                </Button>
-              </Stack>
-            </Paper>
-          </motion.div>
+                    "&:hover fieldset": {
+                      borderColor: accentColor,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: accentColor,
+                    },
+                  },
+                  "& .MuiOutlinedInput-input::placeholder": {
+                    color: "#94A3B8",
+                    opacity: 1,
+                  },
+                }}
+              />
+
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<SearchIcon />}
+                onClick={searchWeather}
+                disabled={loading}
+                sx={{
+                  minWidth: { sm: 130 },
+                  py: { xs: 1.5, sm: 0 },
+                  borderRadius: 2.5,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  color: "#082F49",
+                  background:
+                    "linear-gradient(135deg, #67E8F9, #38BDF8)",
+                  boxShadow: "0 4px 20px rgba(56,189,248,0.18)",
+                  "&:hover": {
+                    background:
+                      "linear-gradient(135deg, #A5F3FC, #67E8F9)",
+                    boxShadow: "0 6px 24px rgba(56,189,248,0.3)",
+                  },
+                  "&.Mui-disabled": {
+                    color: "#64748B",
+                    background: "#334155",
+                  },
+                }}
+              >
+                Search
+              </Button>
+            </Stack>
+          </Paper>
 
           {/* Error */}
           {error && (
-            <Typography
-              color="error"
-              align="center"
-              sx={{ mb: 3 }}
+            <Paper
+              role="alert"
+              sx={{
+                p: 2,
+                mb: 3,
+                textAlign: "center",
+                color: "#FCA5A5",
+                bgcolor: "rgba(127, 29, 29, 0.55)",
+                border: "1px solid rgba(248,113,113,0.35)",
+                borderRadius: 3,
+                backdropFilter: "blur(12px)",
+              }}
             >
               {error}
-            </Typography>
+            </Paper>
           )}
 
           {/* Loading */}
           {loading && (
-            <Stack
-              alignItems="center"
-              spacing={2}
-              sx={{ mt: 6 }}
-            >
-              <CircularProgress />
-
-              <Typography color="text.secondary">
+            <Stack alignItems="center" spacing={2} sx={{ my: 5 }}>
+              <CircularProgress
+                sx={{ color: accentColor }}
+                aria-label="Loading weather"
+              />
+              <Typography sx={{ color: "#F8FAFC" }}>
                 Fetching weather...
               </Typography>
             </Stack>
           )}
 
-          {/* Weather Result */}
+          {/* Current weather */}
           {!loading && weather && (
             <motion.div
-              initial={{
-                opacity: 0,
-                y: 40,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              transition={{
-                duration: 0.6,
-              }}
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
             >
               <Card
-                elevation={3}
                 sx={{
+                  ...glassCard,
+                  mb: 4,
                   borderRadius: 4,
+                  overflow: "hidden",
                 }}
               >
-                <CardContent
-                  sx={{
-                    p: {
-                      xs: 3,
-                      md: 4,
-                    },
-                  }}
-                >
-
-                  {/* Location + Condition */}
+                <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
+                  {/* City and condition */}
                   <Stack
-                    direction={{
-                      xs: "column",
-                      sm: "row",
-                    }}
+                    direction={{ xs: "column", sm: "row" }}
                     justifyContent="space-between"
-                    alignItems={{
-                      xs: "flex-start",
-                      sm: "center",
-                    }}
+                    alignItems={{ xs: "flex-start", sm: "center" }}
                     spacing={2}
                   >
-
                     <Box>
                       <Stack
                         direction="row"
-                        spacing={1}
                         alignItems="center"
+                        spacing={1}
                       >
-                        <LocationOnIcon color="primary" />
+                        <LocationOnIcon
+                          sx={{ color: accentColor, fontSize: 30 }}
+                        />
 
                         <Typography
                           variant="h4"
-                          fontWeight={600}
+                          fontWeight={700}
+                          sx={{
+                            color: "#F8FAFC",
+                            fontSize: { xs: "1.8rem", md: "2.2rem" },
+                          }}
                         >
                           {weather.city}
                         </Typography>
                       </Stack>
 
                       <Typography
-                        color="text.secondary"
-                        sx={{ ml: 4 }}
+                        sx={{ ml: 4.5, color: mutedText }}
                       >
                         {weather.country}
                       </Typography>
                     </Box>
 
-                    <Paper
-                      elevation={0}
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
                       sx={{
+                        bgcolor: "rgba(103,232,249,0.10)",
+                        border: "1px solid rgba(103,232,249,0.2)",
                         px: 2,
                         py: 1,
                         borderRadius: 5,
-                        backgroundColor: "#e3f2fd",
-                        color: "#1976d2",
                       }}
                     >
-                      <Typography fontWeight={500}>
+                      <img
+                        src={`${ICON_URL}/${weather.icon}.png`}
+                        alt={weather.condition}
+                        width="40"
+                        height="40"
+                      />
+
+                      <Typography
+                        sx={{
+                          color: accentColor,
+                          textTransform: "capitalize",
+                          fontWeight: 500,
+                        }}
+                      >
                         {weather.condition}
                       </Typography>
-                    </Paper>
-
+                    </Stack>
                   </Stack>
 
-                  <Divider sx={{ my: 3 }} />
+                  <Divider
+                    sx={{
+                      my: 3,
+                      borderColor: "rgba(148,163,184,0.2)",
+                    }}
+                  />
 
                   {/* Temperature */}
-                  <motion.div
-                    initial={{
-                      opacity: 0,
-                      scale: 0.7,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      scale: 1,
-                    }}
-                    transition={{
-                      duration: 0.5,
-                      delay: 0.2,
+                  <Typography
+                    variant="h1"
+                    fontWeight={700}
+                    sx={{
+                      fontSize: { xs: "4rem", md: "6rem" },
+                      lineHeight: 1.1,
+                      color: "#F8FAFC",
+                      letterSpacing: "-3px",
                     }}
                   >
-                    <Typography
-                      variant="h1"
-                      fontWeight={600}
+                    {weather.temperature}
+                    <Box
+                      component="span"
                       sx={{
-                        fontSize: {
-                          xs: "4rem",
-                          md: "6rem",
-                        },
+                        color: accentColor,
+                        ml: 0.5,
                       }}
                     >
-                      {weather.temperature}°C
-                    </Typography>
-                  </motion.div>
+                      °C
+                    </Box>
+                  </Typography>
 
-                  {/* Details */}
-                  <Stack
-                    direction={{
-                      xs: "column",
-                      sm: "row",
+                  <Typography
+                    sx={{
+                      mt: 1,
+                      color: mutedText,
+                      fontSize: "0.95rem",
                     }}
-                    spacing={2}
-                    sx={{ mt: 3 }}
                   >
+                    Current temperature
+                  </Typography>
 
+                  {/* Weather details */}
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "repeat(3, minmax(0, 1fr))",
+                      },
+                      gap: 2,
+                      mt: 3,
+                    }}
+                  >
                     <WeatherDetail
-                      icon={<DeviceThermostatIcon />}
+                      icon={
+                        <DeviceThermostatIcon
+                          sx={{ color: accentColor, fontSize: 30 }}
+                        />
+                      }
                       title="Feels Like"
                       value={`${weather.feelsLike}°C`}
                     />
 
                     <WeatherDetail
-                      icon={<WaterDropIcon />}
+                      icon={
+                        <WaterDropIcon
+                          sx={{ color: "#60A5FA", fontSize: 30 }}
+                        />
+                      }
                       title="Humidity"
                       value={`${weather.humidity}%`}
                     />
 
                     <WeatherDetail
-                      icon={<AirIcon />}
-                      title="Wind"
+                      icon={
+                        <AirIcon
+                          sx={{ color: "#A5B4FC", fontSize: 30 }}
+                        />
+                      }
+                      title="Wind Speed"
                       value={`${weather.wind} m/s`}
                     />
-
-                  </Stack>
-
+                  </Box>
                 </CardContent>
               </Card>
+
+              {/* Five-day forecast */}
+              {forecast.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Typography
+                    variant="h5"
+                    fontWeight={700}
+                    sx={{
+                      color: "#F8FAFC",
+                      mb: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <CalendarMonthIcon sx={{ color: accentColor }} />
+                    5-Day Forecast
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "repeat(2, minmax(0, 1fr))",
+                        sm: "repeat(3, minmax(0, 1fr))",
+                        md: "repeat(5, minmax(0, 1fr))",
+                      },
+                      gap: 2,
+                    }}
+                  >
+                    {forecast.map((day) => (
+                      <Paper
+                        key={day.date}
+                        elevation={0}
+                        sx={{
+                          ...glassCard,
+                          p: 2,
+                          borderRadius: 3,
+                          textAlign: "center",
+                          transition:
+                            "transform 0.25s ease, border-color 0.25s ease, background-color 0.25s ease",
+                          "&:hover": {
+                            transform: "translateY(-4px)",
+                            borderColor: accentColor,
+                            bgcolor: "rgba(30, 41, 59, 0.94)",
+                          },
+                        }}
+                      >
+                        <Typography
+                          fontWeight={700}
+                          sx={{ color: "#F8FAFC" }}
+                        >
+                          {day.dayName}
+                        </Typography>
+
+                        <Typography
+                          variant="caption"
+                          sx={{ color: mutedText }}
+                        >
+                          {day.formattedDate}
+                        </Typography>
+
+                        <Box sx={{ my: 1 }}>
+                          <img
+                            src={`${ICON_URL}/${day.icon}@2x.png`}
+                            alt={day.condition}
+                            width="60"
+                            height="60"
+                          />
+                        </Box>
+
+                        <Typography
+                          variant="h5"
+                          fontWeight={700}
+                          sx={{ color: accentColor }}
+                        >
+                          {day.temp}°C
+                        </Typography>
+
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: mutedText,
+                            textTransform: "capitalize",
+                            mt: 0.5,
+                          }}
+                        >
+                          {day.condition}
+                        </Typography>
+                      </Paper>
+                    ))}
+                  </Box>
+                </motion.div>
+              )}
             </motion.div>
           )}
-
         </Container>
       </Box>
     </>
   );
 }
 
-/* Reusable Weather Detail */
-
 function WeatherDetail({ icon, title, value }) {
   return (
     <Paper
       elevation={0}
       sx={{
-        flex: 1,
         p: 2,
         borderRadius: 3,
-        backgroundColor: "#f8fafc",
+        bgcolor: "rgba(30, 41, 59, 0.85)",
+        color: "#F8FAFC",
+        border: "1px solid rgba(103, 232, 249, 0.15)",
+        transition: "border-color 0.25s ease, transform 0.25s ease",
+        "&:hover": {
+          borderColor: "rgba(103,232,249,0.6)",
+          transform: "translateY(-2px)",
+        },
       }}
     >
-      <Stack
-        direction="row"
-        spacing={1.5}
-        alignItems="center"
-      >
+      <Stack direction="row" spacing={1.5} alignItems="center">
         {icon}
 
-        <Box>
+        <Box sx={{ minWidth: 0 }}>
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{ color: "#CBD5E1" }}
           >
             {title}
           </Typography>
 
           <Typography
             variant="h6"
-            fontWeight={600}
+            fontWeight={700}
+            sx={{ color: "#F8FAFC" }}
           >
             {value}
           </Typography>

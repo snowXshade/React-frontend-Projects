@@ -1,0 +1,99 @@
+
+.animated-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: none;
+  z-index: -1;
+  background: #080b18;
+}
+
+.aurora {
+  position: absolute;
+  width: 65vw;
+  height: 65vw;
+  min-width: 450px;
+  min-height: 450px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.aurora-one {
+  top: -35%;
+  left: -15%;
+  background: radial-gradient(
+    circle,
+    #5145ff 0%,
+    #5145ff55 35%,
+    transparent 70%
+  );
+  animation: auroraMoveOne 16s ease-in-out infinite alternate;
+}
+
+.aurora-two {
+  right: -20%;
+  top: 5%;
+  background: radial-gradient(
+    circle,
+    #00c8ff 0%,
+    #00c8ff44 35%,
+    transparent 70%
+  );
+  animation: auroraMoveTwo 20s ease-in-out infinite alternate;
+}
+
+.aurora-three {
+  left: 15%;
+  bottom: -55%;
+  background: radial-gradient(
+    circle,
+    #b13cff 0%,
+    #b13cff44 35%,
+    transparent 70%
+  );
+  animation: auroraMoveThree 18s ease-in-out infinite alternate;
+}
+
+.aurora-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    #080b1810,
+    #080b1830,
+    #080b1860
+  );
+}
+
+.bg-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
+}
+
+@keyframes auroraMoveOne {
+  from { transform: translate(0, 0) rotate(0deg) scale(1); }
+  to { transform: translate(18vw, 12vh) rotate(25deg) scale(1.2); }
+}
+
+@keyframes auroraMoveTwo {
+  from { transform: translate(0, 0) scale(1.1); }
+  to { transform: translate(-20vw, 15vh) scale(0.85); }
+}
+
+@keyframes auroraMoveThree {
+  from { transform: translate(0, 0) scale(0.9); }
+  to { transform: translate(12vw, -20vh) scale(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora {
+    animation: none;
+  }
+}

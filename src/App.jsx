@@ -1,7 +1,8 @@
-import "./App.css";
-
 // import Zorodha from "./Pages/Zorodha";
 import Weather from "./pages/Weather";
+
+import Particles from "../src/compo/Particles"
+
 
 import { Routes, Route, Link } from "react-router-dom";
 import { Button, Stack } from "@mui/material";
@@ -34,11 +35,14 @@ function Home() {
 
 function App() {
   return (
+    <>
+    <Particles/>
     <Routes>
       <Route path="/" element={<Home />} />
       {/* <Route path="/zorodha" element={<Zorodha />} /> */}
       <Route path="/weather" element={<Weather />} />
     </Routes>
+    </>
   );
 }
 
