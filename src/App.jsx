@@ -1,47 +1,22 @@
-// import Zorodha from "./Pages/Zorodha";
+
+import { Routes, Route } from "react-router-dom";
+
+import Home from "./pages/Home";
 import Weather from "./pages/Weather";
+// import Zorodha from "./Pages/Zorodha";
 
-import Particles from "../src/compo/Particles"
-
-
-import { Routes, Route, Link } from "react-router-dom";
-import { Button, Stack } from "@mui/material";
-
-function Home() {
-  return (
-    <div>
-      <h1>Main Page</h1>
-
-      <Stack direction="row" spacing={2}>
-        {/* <Button
-          component={Link}
-          to="/zorodha"
-          variant="contained"
-        >
-          Zorodha
-        </Button> */}
-
-        <Button
-          component={Link}
-          to="/weather"
-          variant="contained"
-        >
-          Weather
-        </Button>
-      </Stack>
-    </div>
-  );
-}
+import Particles from "./compo/Particles";
 
 function App() {
   return (
     <>
-    <Particles/>
-    <Routes>
-      <Route path="/" element={<Home />} />
-      {/* <Route path="/zorodha" element={<Zorodha />} /> */}
-      <Route path="/weather" element={<Weather />} />
-    </Routes>
+      <Particles />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/weather" element={<Weather />} />
+        {/* <Route path="/zorodha" element={<Zorodha />} /> */}
+      </Routes>
     </>
   );
 }

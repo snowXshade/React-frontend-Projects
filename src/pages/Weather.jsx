@@ -241,31 +241,46 @@ function Weather() {
                 onChange={(event) => setCity(event.target.value)}
                 onKeyDown={handleKeyDown}
                 sx={{
-                  "& .MuiInputLabel-root": {
-                    color: mutedText,
-                  },
-                  "& .MuiInputLabel-root.Mui-focused": {
-                    color: accentColor,
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    color: "#F8FAFC",
-                    borderRadius: 2.5,
-                    backgroundColor: "rgba(255,255,255,0.03)",
-                    "& fieldset": {
-                      borderColor: "rgba(148,163,184,0.35)",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: accentColor,
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: accentColor,
-                    },
-                  },
-                  "& .MuiOutlinedInput-input::placeholder": {
-                    color: "#94A3B8",
-                    opacity: 1,
-                  },
-                }}
+  "& .MuiInputLabel-root": {
+    color: "#FFFFFF",
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#67E8F9",
+  },
+  "& .MuiOutlinedInput-root": {
+    color: "#F8FAFC",
+    borderRadius: 2.5,
+    backgroundColor: "rgba(2, 6, 23, 0.95)",
+
+    "& fieldset": {
+      borderColor: "rgba(148, 163, 184, 0.3)",
+    },
+    "&:hover fieldset": {
+      borderColor: "#67E8F9",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#67E8F9",
+    },
+
+    // Prevent white background after typing/autofill
+    "& input": {
+      color: "#F8FAFC",
+      backgroundColor: "transparent",
+      WebkitTextFillColor: "#F8FAFC",
+      caretColor: "#67E8F9",
+    },
+    "& input:-webkit-autofill": {
+      WebkitBoxShadow: "0 0 0 100px #020617 inset",
+      WebkitTextFillColor: "#F8FAFC",
+      caretColor: "#67E8F9",
+      borderRadius: "inherit",
+    },
+  },
+  "& .MuiOutlinedInput-input::placeholder": {
+    color: "#94A3B8",
+    opacity: 1,
+  },
+}}
               />
 
               <Button
