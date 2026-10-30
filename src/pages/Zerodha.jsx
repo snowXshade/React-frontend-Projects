@@ -1,5 +1,5 @@
 import Hero from "../zerodhaCompo/Hero"
-import Navbar from "../zerodhaCompo/NavBar"
+import Navbar from "../zerodhaCompo/Navbar"
 import "./zerodha.css"
 
 const Zerodha = () => {
