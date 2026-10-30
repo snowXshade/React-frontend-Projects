@@ -1,31 +1,31 @@
 
 import "./Hero.css";
 
-function Home() {
+function Hero() {
   return (
-    <section className="hero" id="home">
+    <section className="hero">
 
+      {/* Hero Image */}
+      <div className="hero-image">
+        <img
+          src="https://zerodha.com/static/images/landing.png"
+          alt="Zerodha Trading Platform"
+        />
+      </div>
+
+      {/* Hero Content */}
       <div className="hero-content">
 
-        <h1>
-          Build Something <span>Amazing</span>
-        </h1>
+        <h1>Invest in everything</h1>
 
         <p>
-          Welcome to our website. We create modern,
-          responsive and beautiful digital experiences
-          to help your business grow.
+          Online platform to invest in stocks, derivatives,
+          mutual funds, ETFs, bonds, and more.
         </p>
 
-        <div className="hero-buttons">
-          <button className="primary-btn">
-            Get Started
-          </button>
-
-          <button className="secondary-btn">
-            Learn More
-          </button>
-        </div>
+        <button className="hero-button">
+          Sign up for free
+        </button>
 
       </div>
 
@@ -33,4 +33,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default Hero;
