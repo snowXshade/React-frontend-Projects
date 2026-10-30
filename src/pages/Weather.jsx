@@ -17,6 +17,8 @@ import WeatherIntro from "../compo/WeatherIntro";
 import SearchBox from "../compo/SeachBox";
 import WeatherInfoBox from "../compo/WeatherInfoBox";
 
+import Particles from "../compo/Particles";
+
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 const BASE_URL = "https://api.openweathermap.org/data/2.5";
 
@@ -155,6 +157,8 @@ function Weather() {
 
   return (
     <>
+<Particles/>
+
       {showIntro && (
         <WeatherIntro onComplete={() => setShowIntro(false)} />
       )}

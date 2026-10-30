@@ -2,6 +2,8 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
+import Particles from "../compo/Particles";
+
 import {
   Box,
   Button,
@@ -47,13 +49,15 @@ const projects = [
     icon: <ShowChartIcon sx={{ fontSize: 38 }} />,
     gradient: "linear-gradient(135deg, #334155, #4f46e5)",
     technologies: ["React", "Material UI", "Responsive Design"],
-    route: "/zorodha",
-    disabled: true,
+    route: "/zerodha",
+    disabled: false,
   },
 ];
 
 function Home() {
   return (
+    <>
+    <Particles />
     <Box
       sx={{
         minHeight: "100vh",
@@ -414,6 +418,7 @@ function Home() {
         </Box>
       </Container>
     </Box>
+    </>
   );
 }
 

@@ -1,0 +1,38 @@
+.btn {
+  display: inline-block;
+  padding: 10px 30px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: inherit;
+}
+
+/* Zerodha Primary Button */
+.btn-primary {
+  background-color: #387ed1;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: #222222;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background-color: #ffffff;
+  color: #387ed1;
+  border: 1px solid #387ed1;
+}
+
+.btn-secondary:hover {
+  background-color: #f5f8fc;
+}
+
+/* Disabled State */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
